@@ -4,7 +4,7 @@ import Session from "../models/Session.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const ACCESS_TOKEN_TTL = "10s";
+const ACCESS_TOKEN_TTL = "30m";
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
 export const signUp = async (req, res) => {
@@ -105,7 +105,7 @@ export const signOut = async (req, res) => {
 export const refreshToken = async (req, res) => {
   try{
     //lấy refresh token từ cookie
-    const token = req.cookie?.refreshToken;
+    const token = req.cookies?.refreshToken;
     if(!token){
       return res.status(401).json({message: "No refresh token provided."});
     }
