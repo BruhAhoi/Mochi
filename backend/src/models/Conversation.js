@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "./User";
+import User from "./User.js";
 
 const participantSchema = new mongoose.Schema(
   {
@@ -8,7 +8,7 @@ const participantSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    jointAt: {
+    joinedAt: {
       type: Date,
       default: Date.now,
     },

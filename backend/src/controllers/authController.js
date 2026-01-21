@@ -26,7 +26,7 @@ export const signUp = async (req, res) => {
       username,
       hashedPassword,
       email,
-      displayName: `${firstName} ${lastName}`,
+      displayName: `${lastName} ${firstName}`,
     });
     return res.status(204).json({ message: "User created successfully." });
   } catch (error) {
