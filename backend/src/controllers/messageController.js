@@ -36,11 +36,34 @@ export const sendDirectMessage = async (req, res) => {
     updateconversationAfterCreateMessage(conversation, message, senderId);
     await conversation.save();
 
-    return res.status(201).json({message});
+    return res.status(201).json({ message });
   } catch (error) {
     console.error("System error", error);
-    return res.status(500).json({messgae:"System error"});
+    return res.status(500).json({ messgae: "System error" });
   }
 };
 
-export const sendGrouptMessage = async (req, res) => {};
+export const sendGrouptMessage = async (req, res) => {
+  try {
+    const { conversationId, content } = req.body;
+    const senderId = req.user._id;
+    const conversation = req.conversation;
+
+    if (!content) {
+      return res.status(400).json("Lack of content");
+    }
+    const message = await Message.create({
+      conversationId,
+      senderId,
+      content,
+    });
+    updateconversationAfterCreateMessage(conversation, message, senderId);
+
+    await conversation.save();
+
+    return res.status(201).json({ message });
+  } catch (error) {
+    console.error("System error", error);
+    return res.status(500).json("System error");
+  }
+};

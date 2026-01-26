@@ -1,0 +1,24 @@
+import React from 'react'
+import { useChatStore } from '../../stores/useChatStore'
+import ChatWelcomeScreen from './ChatWelcomeScreen';
+import ChatWindowSkeleton from './ChatWindowSkeleton';
+import { SidebarInset } from '../ui/sidebar';
+
+const ChatWindowLayout = () => {
+  const {activeConversationId, conversations, messageLoading: loading, messages} = useChatStore();
+  const selectedConvo = conversations.find((c) => c._id===activeConversationId) ?? null
+
+  if(!selectedConvo){
+    return <ChatWelcomeScreen/>
+  }
+  if(loading){
+    return <ChatWindowSkeleton/>
+  }
+  return (
+    <SidebarInset className='flex flex-col h-full flex-1 overflow-hidden rounded-sm shadow-md'>
+      
+    </SidebarInset>
+  )
+}
+
+export default ChatWindowLayout

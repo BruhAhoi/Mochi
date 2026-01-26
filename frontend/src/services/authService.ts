@@ -25,7 +25,7 @@ export const authService = {
     },
     fetchMe: async () => {
         const response = await api.get('/users/me', { withCredentials: true });
-        return response.data;
+        return response.data.user;
     },
     refreshToken: async () => {
         const response = await api.post('/auth/refresh',{}, { withCredentials: true });

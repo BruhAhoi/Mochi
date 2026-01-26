@@ -9,8 +9,10 @@ export const checkFriendship = async (req, res, next) => {
     const recipientId = req.body?.recipientId ?? null;
     const memberIds = req.body?.memberIds ?? [];
 
-    if (!recipientId && memberIds.length===0) {
-      return res.status(400).json({ message: "Need recipientId or member list" });
+    if (!recipientId && memberIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Need recipientId or member list" });
     }
     if (recipientId) {
       const [userA, userB] = pair(me, recipientId);
@@ -24,20 +26,46 @@ export const checkFriendship = async (req, res, next) => {
     }
 
     const friendCheck = memberIds.map(async (memberId) => {
-        const [userA, userB] = pair(me, memberId);
-        const friend = await Friend.findOne({userA, userB});
-        return friend ? null : memberId;
+      const [userA, userB] = pair(me, memberId);
+      const friend = await Friend.findOne({ userA, userB });
+      return friend ? null : memberId;
     });
 
     const results = await Promise.all(friendCheck);
     const notFriends = results.filter(Boolean);
 
-    if(notFriends.length > 0 ){
-        return res.status(403).json({message: "You only invite friends inton group", notFriends})
+    if (notFriends.length > 0) {
+      return res
+        .status(403)
+        .json({ message: "You only invite friends inton group", notFriends });
     }
     next();
   } catch (error) {
-    console.error("System error", error)
-    return res.status(500).json({message: "System error"});
+    console.error("System error", error);
+    return res.status(500).json({ message: "System error" });
+  }
+};
+
+export const checkGroupMembership = async (req, res, next) => {
+  try {
+    const { conversationId } = req.body;
+    const userId = req.user._id;
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    const isMember = conversation.participants.some(
+      (p) => p.userId.toString() === userId.toString(),
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not in this group" });
+    }
+    req.conversation = conversation;
+    next();
+  } catch (error) {
+    console.error("System error", error);
+    return res.status(500).json("System error");
   }
 };
