@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useChatStore } from '../../stores/useChatStore'
 import ChatWelcomeScreen from './ChatWelcomeScreen';
 import ChatWindowSkeleton from './ChatWindowSkeleton';
@@ -8,8 +8,22 @@ import ChatWindowBody from './ChatWindowBody';
 import MessageInput from './MessageInput';
 
 const ChatWindowLayout = () => {
-  const {activeConversationId, conversations, messageLoading: loading, messages} = useChatStore();
+  const {activeConversationId, conversations, messageLoading: loading, messages, markAsSeen} = useChatStore();
   const selectedConvo = conversations.find((c) => c._id===activeConversationId) ?? null
+
+  useEffect(() => {
+    if(!selectedConvo) return;
+
+    const markSeen = async () => {
+      try{
+        await markAsSeen();
+      }catch(error){
+        console.error("Lỗi khi đánh dấu đã xem tin nhắn", error);
+      }
+    }
+
+    markSeen();
+  },[markAsSeen, selectedConvo])
 
   if(!selectedConvo){
     return <ChatWelcomeScreen/>
@@ -19,11 +33,11 @@ const ChatWindowLayout = () => {
   }
   return (
     <SidebarInset className='flex flex-col h-full flex-1 overflow-hidden rounded-sm shadow-md'>
-      <ChatWindowHeader/>
+      <ChatWindowHeader chat={selectedConvo}/>
       <div className='flex-1 overflow-y-auto bg-primary-foreground'>
         <ChatWindowBody/>
       </div>
-      <MessageInput/>
+      <MessageInput selectedConvo={selectedConvo}/>
     </SidebarInset>
   )
 }

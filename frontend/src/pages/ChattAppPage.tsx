@@ -6,11 +6,12 @@ import ChatWindowLayout from '../components/chat/ChatWindowLayout'
 const ChattAppPage = () => {
   return (
     <SidebarProvider>
-      <AppSidebar>
-        <div className=' flex h-screen w-full p-2'>
-          <ChatWindowLayout/>
+      <div className='flex h-screen w-full'>
+        <AppSidebar />
+        <div className='flex-1 p-2'>
+          <ChatWindowLayout />
         </div>
-      </AppSidebar>
+      </div>
     </SidebarProvider>
   )
 }

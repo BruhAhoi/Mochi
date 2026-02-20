@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 
-const StatusBagde = ({status} : {status: "online" | "offline"}) => {
+const StatusBadge = ({status} : {status: "online" | "offline"}) => {
   return (
     <div className={cn(
         "absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-card",
@@ -13,4 +13,4 @@ const StatusBagde = ({status} : {status: "online" | "offline"}) => {
   )
 }
 
-export default StatusBagde
+export default StatusBadge

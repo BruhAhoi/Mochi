@@ -8,30 +8,33 @@ interface GroupChatAvatarProps {
     type: "chat" | "sidebar";
 }
 const GroupChatAvatar = ({ participants, type }: GroupChatAvatarProps) => {
-    const avatars = [];
-    const limit = Math.min(participants.length, 4);
+  const avatars = [];
+  const limit = Math.min(participants.length, 4);
 
-    for (let i = 0; i < limit; i++) {
-        const member = participants[i];
-        avatars.push(
-            <UserAvatar
-                key={i}
-                type={type}
-                name={member.displayName}
-                avatarUrl={member.displayName ?? undefined}
-            />
-        );
-    }
-    return (
-        <div className='relative flex -space-x-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-2'>
-            {avatars}
-            {participants.length > limit && (
-                <div className='flex items-center z-10 justify-center rounded-full size-8 bg-muted ring-2 ring-background text-muted-foreground'>
-                    <Ellipsis className='size-4' />
-                </div>
-            )}
+  for (let i = 0; i < limit; i++) {
+    const member = participants[i];
+    avatars.push(
+      <UserAvatar
+        key={i}
+        type={type}
+        name={member.displayName}
+        avatarUrl={member.avatarUrl ?? undefined}
+      />
+    );
+  }
+
+  return (
+    <div className="relative flex -space-x-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-2">
+      {avatars}
+
+      {/* nếu nhiều hơn 4 avatar thì render dấu ... */}
+      {participants.length > limit && (
+        <div className="flex items-center z-10 justify-center size-8 rounded-full bg-muted ring-2 ring-background text-muted-foreground">
+          <Ellipsis className="size-4" />
         </div>
-    )
-}
+      )}
+    </div>
+  );
+};
 
 export default GroupChatAvatar

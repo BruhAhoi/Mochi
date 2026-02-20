@@ -16,12 +16,14 @@ export const useAuthStore = create<AuthState>()(
         },
         cleanState: () => {
             set({ accessToken: null, user: null, loading: false });
-            localStorage.clear();
             useChatStore.getState().reset();
+            localStorage.clear();
+            sessionStorage.clear();
         },
 
         signUp: async (username, password, email, firstname, lastname) => {
             try {
+                get().cleanState();
                 set({ loading: true });
                 await authService.signUp(username, password, email, firstname, lastname);
                 toast.success("Đăng kí thành công!")
@@ -59,7 +61,6 @@ export const useAuthStore = create<AuthState>()(
         fetchMe: async () => {
             try {
                 const user = await authService.fetchMe();
-                console.log("user after login",user)
                 set({ user });
             } catch (error) {
                 console.error("Fetch me error:", error);
@@ -85,15 +86,6 @@ export const useAuthStore = create<AuthState>()(
                 set({ loading: false });
             }
         },
-        test: async () => {
-            try {
-                const response = await authService.test();
-                toast.success(response.message);
-            } catch (error) {
-                console.error("Test error:", error);
-                toast.error("Test thất bại. Vui lòng thử lại.");
-            }
-        }
     }), {
         name: "auth-storage",
         partialize: (state) => ({ user: state.user }),

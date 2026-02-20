@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import { io } from "../socket/index.js"
 
 export const createConversation = async (req, res) => {
   try {
@@ -48,7 +49,6 @@ export const createConversation = async (req, res) => {
       });
       await conversation.save();
     }
-    
 
     if (!conversation) {
       return res.status(400).json({ message: "Conversation type is invalid" });
@@ -70,74 +70,142 @@ export const createConversation = async (req, res) => {
 };
 
 export const getConversation = async (req, res) => {
-    try{
-        const userId = req.user._id;
-        const conversations = await Conversation.find({
-            'participants.userId': userId
-        })
-        .sort({lastMessageAt: -1, updatedAt: -1})
-        .populate({
-            path:'participants.userId',
-            select: 'displayName avatarUrl'
-        })
-        .populate({
-            path:'lastMessage.senderId',
-            select: 'displayName avatarUrl'
-        })
-        .populate({
-            path:'seenBy',
-            select: 'displayName avatarUrl'
-        });
+  try {
+    const userId = req.user._id;
+    const conversations = await Conversation.find({
+      "participants.userId": userId,
+    })
+      .sort({ lastMessageAt: -1, updatedAt: -1 })
+      .populate({
+        path: "participants.userId",
+        select: "displayName avatarUrl",
+      })
+      .populate({
+        path: "lastMessage.senderId",
+        select: "displayName avatarUrl",
+      })
+      .populate({
+        path: "seenBy",
+        select: "displayName avatarUrl",
+      });
 
-        const formatted = conversations.map((convo) => {
-            const participants = (convo.participants || []).map((p) => ({
-                _id: p.userId?._id,
-                displayName: p.userId?.displayName,
-                avatarUrl: p.userId?.avatarUrl ?? null,
-                joinedAt: p.joinedAt,
-            }));
-            return {
-                ...convo.toObject(),
-                unreadCounts: convo.unreadCounts || {},
-                participants,
-            }
-        });
-        return res.status(200).json({conversations: formatted});
-    }catch(error){
-        console.error("System error", error);
-        return res.status(500).json({message: "System error"})
-    }
+    const formatted = conversations.map((convo) => {
+      const participants = (convo.participants || []).map((p) => ({
+        _id: p.userId?._id,
+        displayName: p.userId?.displayName,
+        avatarUrl: p.userId?.avatarUrl ?? null,
+        joinedAt: p.joinedAt,
+      }));
+
+      return {
+        ...convo.toObject(),
+        unreadCounts: convo.unreadCounts || {},
+        participants,
+      };
+    });
+    console.log("convo", formatted)
+
+    return res.status(200).json({ conversations: formatted });
+  } catch (error) {
+    console.error("Lỗi xảy ra khi lấy conversations", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
 };
 
 export const getMessages = async (req, res) => {
-    try{
-        const {conversationId} = req.params;
-        const {limit = 50, cursor} = req.query;
-        console.log("conversationId", conversationId)
+  try {
+    const { conversationId } = req.params;
+    const { limit = 50, cursor } = req.query;
 
-        const query = {conversationId};
-        if(cursor){
-            query.createAt = { $lt: new Date(cursor)};
-        }
-
-        let messages = await Message.find(query)
-        .sort({createdAt: -1})
-        .limit(Number(limit) + 1)
-
-        console.log("Found messages:", messages.length);
-
-        let nextCursor = null;
-
-        if(messages.length > Number(limit)){
-            const nextMessage = messages[messages.length - 1];
-            nextCursor = nextMessage.createdAt.toISOString();
-            messages.pop();
-        }
-        messages = messages.reverse();
-
-        return res.status(200).json({messages, nextCursor})
-    }catch(error){
-        console.error("System error", error);
-        return res.status(500).json({message: "System error"})
+    const query = { conversationId };
+    if (cursor) {
+      query.createAt = { $lt: new Date(cursor) };
     }
+
+    let messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) + 1);
+
+    let nextCursor = null;
+
+    if (messages.length > Number(limit)) {
+      const nextMessage = messages[messages.length - 1];
+      nextCursor = nextMessage.createdAt.toISOString();
+      messages.pop();
+    }
+    messages = messages.reverse();
+
+    return res.status(200).json({ messages, nextCursor });
+  } catch (error) {
+    console.error("System error", error);
+    return res.status(500).json({ message: "System error" });
+  }
 };
+
+export const getUserConversationForSocketIO = async (userId) => {
+  try{
+    const conversation = await Conversation.find(
+      {"participants.userId": userId},
+      {_id: 1}
+    );
+
+    return conversation.map((c) => c._id.toString());
+  }catch(error){
+    console.error("Error fetching coversation", error)
+    return [];
+  }
+}
+
+export const markAsSeen = async (req, res) => {
+  try{
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if(!conversation){
+      return res.status(404).json({message: "Conversation không tồn tại"})
+    }
+
+    const last = conversation.lastMessage;
+
+    if(!last){
+      return res.status(200).json({message: "No messages to mark as seen"})
+    }
+
+    if(last.senderId.toString() === userId){
+      return res.status(200).json({message: "Không thể mark as seen tin nhắn của chính mình"})
+    }
+
+    const updated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      {
+        $addToSet: {seenBy: userId},
+        $set: { [`unreadCounts.${userId}`]: 0 }
+      },{
+        new: true
+      }
+    );
+
+    io.to(conversationId).emit("read-message",{
+      conversation: updated,
+      lastMessage:{
+        _id: updated?.lastMessage._id,
+        content: updated?.lastMessage.content,
+        createdAt: updated?.lastMessage.createdAt,
+        sender:{
+          _id: updated?.lastMessage.senderId
+        },
+      },
+    });
+
+    return res.status(200).json({
+      message: "Marked as seen",
+      seenBy: updated?.seenBy || [],
+      myUnreadCount: updated?.unreadCounts[userId] || 0
+    })
+  }catch(error){
+    console.error("Lỗi hệ thống", error);
+    return res.status(500).json({message: "Lỗi hệ thống"})
+  }
+}

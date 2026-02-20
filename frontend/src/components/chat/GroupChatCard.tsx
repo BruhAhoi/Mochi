@@ -21,26 +21,33 @@ const GroupChatCard = ({ convo }: { convo: Conversation }) => {
     }
   }
   return (
-    <div>
-      <ChatCard
-        convoId={convo._id}
-        name={name}
-        timeStamp={convo.lastMessage?.createdAt ? new Date(convo.lastMessage.createdAt) : undefined}
-        isActive={activeConversationId === convo._id}
-        onSelect={handleSelectConversation}
-        unreadCounts={unreadCount}
-        leftSection={<>
+    <ChatCard
+      convoId={convo._id}
+      name={name}
+      timeStamp={
+        convo.lastMessage?.createdAt
+          ? new Date(convo.lastMessage.createdAt)
+          : undefined
+      }
+      isActive={activeConversationId === convo._id}
+      onSelect={handleSelectConversation}
+      unreadCounts={unreadCount}
+      leftSection={
+        <>
           {unreadCount > 0 && <UnreadCountBadge unreadCount={unreadCount} />}
           <GroupChatAvatar
             participants={convo.participants}
             type="chat"
           />
-        </>}
-        subtitle={
-          <p className='text-sm truncate text-muted-foreground'>{convo.participants.length} thành viên</p>
-        } />
-    </div>
-  )
+        </>
+      }
+      subtitle={
+        <p className="text-sm truncate text-muted-foreground">
+          {convo.participants.length} thành viên
+        </p>
+      }
+    />
+  );
 }
 
 export default GroupChatCard

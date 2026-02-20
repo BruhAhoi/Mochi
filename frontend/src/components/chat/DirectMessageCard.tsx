@@ -4,55 +4,68 @@ import ChatCard from './ChatCard'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useChatStore } from '../../stores/useChatStore'
 import UserAvatar from './UserAvatar'
-import StatusBagde from './StatusBadge'
+import StatusBadge from './StatusBadge'
 import UnreadCountBadge from './UnreadCountBadge'
 import { cn } from '../../lib/utils'
+import { useSocketStore } from '../../stores/useSocketStore'
 
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const { user } = useAuthStore();
-  const { activeConversationId, setActiveConversation, messages, fetchMessages } = useChatStore();
+  const { activeConversationId, setActiveConversation, messages, fetchMessages } =
+    useChatStore();
+  const { onlineUsers } = useSocketStore();
 
-  if (!user) return null
+  if (!user) return null;
 
   const otherUser = convo.participants.find((p) => p._id !== user._id);
-  if (!otherUser) return null
+  if (!otherUser) return null;
 
   const unreadCount = convo.unreadCounts[user._id];
   const lastMessage = convo.lastMessage?.content ?? "";
+  console.log("message", convo)
 
   const handleSelectConversation = async (id: string) => {
     setActiveConversation(id);
     if (!messages[id]) {
       await fetchMessages();
     }
-  }
+  };
+
   return (
-    <>
-      return 
-      <ChatCard
+    <ChatCard
       convoId={convo._id}
       name={otherUser.displayName ?? ""}
       timeStamp={
-        convo.lastMessage?.createdAt ? new Date(convo.lastMessage.createdAt) : undefined
+        convo.lastMessage?.createdAt
+          ? new Date(convo.lastMessage.createdAt)
+          : undefined
       }
       isActive={activeConversationId === convo._id}
+      onSelect={handleSelectConversation}
+      unreadCounts={unreadCount}
       leftSection={
         <>
-          <UserAvatar type='sidebar' name={otherUser.displayName ?? ""}
-          avatarUrl={otherUser.avatarUrl ?? undefined}
+          <UserAvatar
+            type="sidebar"
+            name={otherUser.displayName ?? ""}
+            avatarUrl={otherUser.avatarUrl ?? undefined}
           />
-          <StatusBagde status='offline'/>
-          {unreadCount > 0 && <UnreadCountBadge unreadCount={unreadCount}/>}
+          <StatusBadge status={onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"} />
+          {unreadCount > 0 && <UnreadCountBadge unreadCount={unreadCount} />}
         </>
       }
       subtitle={
-        <p className={cn("text-sm truncate", unreadCount > 0 ? "font-medium text-foreground" : "text-muted-foreground")}>
+        <p
+          className={cn(
+            "text-sm truncate",
+            unreadCount > 0 ? "font-medium text-foreground" : "text-muted-foreground"
+          )}
+        >
           {lastMessage}
         </p>
-      } />
-    </>
-
-  )
-}
+      }
+    />
+  );
+};
 
 export default DirectMessageCard
