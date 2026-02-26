@@ -30,7 +30,13 @@ io.on("connection", async(socket)=>{
     const conversationIds = await getUserConversationForSocketIO(user._id);
     conversationIds.forEach((id) => {
         socket.join(id);
-    })
+    });
+
+    socket.on("join_conversation", (conversationId) => {
+        socket.join(conversationId);
+    });
+
+    socket.join(user._id.toString());
 
     socket.on("disconnect", () => {
         onlineUsers.delete(user._id);

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware"
 import type { ChatState } from "../types/store"
 import { chatService } from "../services/chatService";
 import { useAuthStore } from "./useAuthStore";
+import { useSocketStore } from "./useSocketStore";
 
 export const useChatStore = create<ChatState>()(
     persist(
@@ -12,6 +13,7 @@ export const useChatStore = create<ChatState>()(
             activeConversationId: null,
             convoLoading: false,
             messageLoading: false,
+            loading: false,
 
             setActiveConversation: (id) => set({ activeConversationId: id }),
             reset: () => {
@@ -183,6 +185,27 @@ export const useChatStore = create<ChatState>()(
                     console.error("Mark as seen error", error);
                 }
             },
+            addConvo: (convo) =>{
+                set((state) => {
+                    const exist = state.conversations.some(c => c._id.toString() === convo._id.toString());
+
+                    return {
+                        conversations: exist ? state.conversations : [convo, ...state.conversations],
+                        activeConversationId: convo._id
+                    }
+                })
+            },
+            createConversation: async (type, name, memberIds) => {
+                try{
+                    const conversation = await chatService.createConversation(type, name, memberIds);
+                    get().addConvo(conversation);
+                    useSocketStore.getState().socket?.emit("join_conversation", conversation._id);
+                }catch(error){
+                    console.error("Create conversation error", error);
+                }finally {
+                    set({loading: false})
+                }
+            }
         }),
 
         {
