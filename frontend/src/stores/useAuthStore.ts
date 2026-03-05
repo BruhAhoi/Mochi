@@ -14,6 +14,9 @@ export const useAuthStore = create<AuthState>()(
         setAccessToken: (token) => {
             set({ accessToken: token });
         },
+        setUser: (user) => {
+            set({user});
+        },
         cleanState: () => {
             set({ accessToken: null, user: null, loading: false });
             useChatStore.getState().reset();

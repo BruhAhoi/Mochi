@@ -29,7 +29,7 @@ import { useAuthStore } from "../../stores/useAuthStore"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isDark, toggleTheme } = useThemeStore();
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -65,12 +65,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
         {/* group chat*/}
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase">
-            nhóm chat
-          </SidebarGroupLabel>
-          <SidebarGroupAction title="Tạo nhóm" className="cursor-pointer">
+          <div className="flex items-center justify-between">
+            <SidebarGroupLabel className="uppercase">
+              nhóm chat
+            </SidebarGroupLabel>
             <NewGroupChatModal />
-          </SidebarGroupAction>
+          </div>
+
           <SidebarGroupContent>
             <GroupChatList />
           </SidebarGroupContent>
